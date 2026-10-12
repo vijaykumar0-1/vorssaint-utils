@@ -22,10 +22,11 @@ final class WindowPreviewProvider {
 
     private var cache: [CGWindowID: CGImage] = [:]
     private var lastTouched: [CGWindowID: TimeInterval] = [:]
-    private static let cacheLimit = 48
+    // Personal fork: fewer, smaller cached window thumbnails (upstream: 48 / 64 MB).
+    private static let cacheLimit = 24
     /// Upper bound on the bytes the thumbnail cache may hold; the count limit
     /// alone would allow ~160 MB of big-window thumbnails.
-    private static let cacheByteBudget = 64 * 1024 * 1024
+    private static let cacheByteBudget = 24 * 1024 * 1024
     private var captureTask: Task<Void, Never>?
     private var warmTask: Task<Void, Never>?
     private var activationToken: NSObjectProtocol?
@@ -37,7 +38,7 @@ final class WindowPreviewProvider {
         // they are the first thing this app sheds. They re-capture on the next
         // invocation (Stage Manager parked windows fall back to app icons
         // until their window becomes active again).
-        let source = DispatchSource.makeMemoryPressureSource(eventMask: .critical, queue: .main)
+        let source = DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical], queue: .main)
         source.setEventHandler { [weak self] in
             self?.cache.removeAll()
             self?.lastTouched.removeAll()

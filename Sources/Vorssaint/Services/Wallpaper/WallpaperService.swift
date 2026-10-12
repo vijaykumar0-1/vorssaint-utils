@@ -603,7 +603,7 @@ final class WallpaperService: ObservableObject {
 enum WallpaperThumbnailCache {
     private static let cache: NSCache<NSString, NSImage> = {
         let cache = NSCache<NSString, NSImage>()
-        cache.countLimit = 400
+        cache.countLimit = 60 // Personal fork (upstream: 400).
         return cache
     }()
 

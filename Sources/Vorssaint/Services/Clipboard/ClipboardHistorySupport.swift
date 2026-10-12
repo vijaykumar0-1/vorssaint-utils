@@ -292,7 +292,9 @@ enum ClipboardHistoryEditing {
     /// A copied document should stay available, while a pathological
     /// pasteboard payload still has a firm in-memory and on-disk bound.
     static let maxCharacters = 1_000_000
-    static let maxStoredTextUTF8Bytes = 64 * 1_024 * 1_024
+    // Personal fork: 16 MB of history text in memory (upstream: 64 MB). The
+    // saved-file limit below is unchanged, so existing history still loads.
+    static let maxStoredTextUTF8Bytes = 16 * 1_024 * 1_024
     static let maxEncodedHistoryBytes = 96 * 1_024 * 1_024
     /// Rows only need enough text to fill their three visible lines. Keeping
     /// this bounded prevents a very large saved document from being copied
