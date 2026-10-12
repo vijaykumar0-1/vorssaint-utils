@@ -28,13 +28,18 @@ trap 'exit 1' INT TERM HUP
 
 # Flags: --dev builds the local-only "Vorssaint (Developer)" variant (its own
 # bundle id, so it coexists with the official app); --install puts it in /Applications.
+# --optimized (with --dev) compiles that variant with -O, like a release, so it
+# runs at release speed while keeping the Developer variant's own identity and
+# its disabled self-update.
 DEV=0
+OPTIMIZED=0
 INSTALL=0
 TEST=0
 TEST_ARGS=()
 for arg in "$@"; do
     case "$arg" in
         --dev)     DEV=1 ;;
+        --optimized) OPTIMIZED=1 ;;
         --install) INSTALL=1 ;;
         --test)    TEST=1 ;;
         --test-suite=*) TEST=1; TEST_ARGS+=("--suite=${arg#*=}") ;;
@@ -47,8 +52,13 @@ if (( DEV )); then
     EXECUTABLE="VorssaintDeveloper"
     APP_BUNDLE_ID="com.vorssaint.utils.dev"
     BUILD_VARIANT_FLAGS=(-D VORSSAINT_DEVELOPMENT)
-    APP_OPTIMIZATION_FLAGS=(-Onone)
-    BUILD_CONFIGURATION="debug"
+    if (( OPTIMIZED )); then
+        APP_OPTIMIZATION_FLAGS=(-O)
+        BUILD_CONFIGURATION="optimized developer"
+    else
+        APP_OPTIMIZATION_FLAGS=(-Onone)
+        BUILD_CONFIGURATION="debug"
+    fi
 else
     APP_NAME="Vorssaint"
     EXECUTABLE="Vorssaint"
@@ -578,6 +588,10 @@ if (( ! DEV )); then
     find build -mindepth 1 -maxdepth 1 ! -name objects -exec rm -rf {} + 2>/dev/null || true
 fi
 APP_OBJECT_DIR="build/objects/$EXECUTABLE"
+# Optimized and debug objects must never mix in one incremental build.
+if (( DEV && OPTIMIZED )); then
+    APP_OBJECT_DIR="$APP_OBJECT_DIR-optimized"
+fi
 mkdir -p build "$APP_OBJECT_DIR"
 APP_OUTPUT_FILE_MAP="$APP_OBJECT_DIR/output-file-map.json"
 write_swift_output_file_map "$APP_OUTPUT_FILE_MAP" "$APP_OBJECT_DIR" "${APP_SOURCES[@]}"
